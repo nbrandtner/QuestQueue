@@ -2,7 +2,7 @@
 
 Stand: 23.11.2026 · Phase 2
 
-**Für den MVP bleiben wir beim lokalen Betrieb mit Docker Compose.** Das passt zum 0-€-Budget für zusätzliche Dienste und zu unserer Vorgabe, persönliche Daten lokal zu speichern. Hier vergleichen wir trotzdem Alternativen für einen möglichen späteren Ausbau. Die Entscheidung steht in [ADR-004](adr/0004-local-compose-hosting.md).
+**Die Hochschulabgabe läuft lokal mit Docker Compose und 0 € zusätzlichen Dienstkosten.** Für einen späteren öffentlichen Betrieb ist **Cloudflare Pages und Cloudflare Containers mit Neon PostgreSQL** die vorgesehene Zielarchitektur. Die Entscheidung steht in [ADR-004](adr/0004-local-compose-hosting.md).
 
 ## 1. Was wir vergleichen
 
@@ -14,7 +14,8 @@ Die 0 € beziehen sich auf zusätzliche Dienste. Vorhandener Rechner, Internet,
 
 | Möglichkeit | Preisbasis | Vorteile | Nachteile für QuestQueue |
 | --- | --- | --- | --- |
-| **A: Eigener Rechner – gewählt** | **0 € zusätzliche Dienstkosten** | Passt zu den Anforderungen; Compose bündelt Webserver, Backend und DB; lokale Demo möglich | Rechner muss laufen; Einrichtung und Updates bleiben bei uns; lokaler Datenträger kann ausfallen |
+| **A: Eigener Rechner – Hochschulabgabe** | **0 € zusätzliche Dienstkosten** | Passt zu den Anforderungen; Compose bündelt Webserver, Backend und DB; lokale Demo möglich | Rechner muss laufen; Einrichtung und Updates bleiben bei uns; lokaler Datenträger kann ausfallen |
+| **Cloudflare Pages + Containers + Neon – öffentlicher Betrieb** | **ab 5 US-$/Monat** bei geringem Verbrauch und Neon Free | Vue-Build, reguläres FastAPI mit Uvicorn und verwaltetes PostgreSQL | Mehrkosten bei überschrittenen Kontingenten, möglicher Kaltstart und gehostete personenbezogene Daten |
 | **B: EU-VPS, z. B. Hetzner** | CX23: recherchierter Tarif von **5,49 €/Monat netto ohne IPv4**; aktuell nicht verfügbar | Compose-Konzept gut übertragbar; volle Kontrolle über alle Dienste | Serverpflege, TLS, Backups und Überwachung selbst übernehmen; Zusatzkosten und anderer Datenstandort |
 | **C: Render Free** | **0 US-$ innerhalb der Free-Limits** | Einfacher Einstieg für einen zeitlich begrenzten Test | Webservice schläft nach 15 Minuten; Start dauert etwa eine Minute; kostenlose DB läuft nach 30 Tagen ab |
 | **D: Render Paid** | Anbieterbeispiel vom **Juli 2026: etwa 13 US-$/Monat für Web + DB**, zuzüglich möglichem Mehrverbrauch | Weniger Serveradministration, verwaltete Datenbank | Laufende Gebühren, Anbieterbindung und externe persönliche Daten; aktueller Gesamttarif muss geprüft werden |
@@ -24,6 +25,8 @@ Quellen: [Hetzner-Preistabelle](https://docs.hetzner.com/general/infrastructure-
 **Einordnung der Preise:** Die Hetzner-Tabelle war über den offiziellen Suchindex lesbar, der direkte Abruf lieferte 404. Die Produktseite nennt den CX23 derzeit nicht verfügbar. Der Betrag ist deshalb ein Tarifbeispiel, kein gerade buchbares Angebot. Die 13 US-$ bei Render sind ausdrücklich ein älteres Anbieterbeispiel, kein bestätigter November-Tarif. Vor einer Bestellung müssten wir den [Hetzner-Kalkulator](https://www.hetzner.com/cloud/) beziehungsweise die [Render-Preisliste](https://render.com/pricing) prüfen. Leistung und tatsächliche Rechnungen haben wir bei keinem Anbieter getestet.
 
 ## 3. Was noch auf die Rechnung kommen kann
+
+Statische Anfragen an Cloudflare Pages sind kostenlos. Der Workers-Paid-Plan kostet mindestens 5 US-$/Monat und enthält für Containers 25 GiB-Stunden RAM, 375 vCPU-Minuten und 200 GB-Stunden Datenträger pro Monat. Bei laufendem Container zählen RAM und Datenträger nach bereitgestellter Größe, CPU nach aktiver Nutzung. Nach dem Einschlafen endet die laufzeitbezogene Abrechnung. Neon Free enthält 1 GB Speicher und 100 Compute-Unit-Stunden pro Projekt und Monat. 5 US-$ sind der Einstiegspreis bei passender Nutzung. Mehrverbrauch, ein späterer Datenbanktarif, Domain und Steuern kommen gegebenenfalls dazu. [Pages-Preise](https://developers.cloudflare.com/pages/functions/pricing/) · [Container-Preise](https://developers.cloudflare.com/containers/platform/pricing/) · [Neon-Preise](https://neon.com/pricing).
 
 Beim VPS kommt zur VM gegebenenfalls eine öffentliche IPv4-Adresse, Backup-/Zusatzspeicher, Mehrtraffic, eine Domain und die anwendbare Steuer dazu. PostgreSQL läuft in dieser Variante auf derselben VM; eine zusätzlich gebuchte Managed-DB wäre ein weiterer Kostenpunkt.
 
@@ -35,9 +38,9 @@ Docker Desktop ist laut [Lizenzübersicht](https://docs.docker.com/subscription-
 
 ## 4. Unsere Entscheidung
 
-A erfüllt den aktuellen Rahmen am besten. Ein günstiger VPS oder PaaS würde nicht nur Geld kosten: Persönliche Daten lägen dann außerhalb des lokalen Rechners, was N-04 widerspricht und eine geänderte Anforderung braucht.
+Compose erfüllt das Dienstbudget und die lokale Speicherung nach N-04 für die Hochschulabgabe. Die öffentliche Zielarchitektur setzt eine eigene Freigabe für gehostete personenbezogene Daten und laufende Kosten voraus.
 
-Bei späterem öffentlichen Betrieb wäre ein VPS interessant, wenn wir die Administration übernehmen möchten. Ein bezahltes PaaS passt eher, wenn uns weniger Serverpflege wichtiger ist als der niedrigste Preis. Render Free eignet sich für einen kurzen Test mit verzichtbaren Daten, nicht als dauerhafter Bestand. Eine bestehende Compose-Datei lässt sich auf PaaS außerdem nicht automatisch unverändert starten; Dienste und gemeinsamer Browser-Zugang müssten angepasst werden.
+Cloudflare Containers erhält den FastAPI-Monolithen samt Uvicorn und den üblichen Python-Abhängigkeiten. Gegenüber einem VPS fällt weniger Serverpflege an. Python Workers unterstützen FastAPI im eigenen Runtime-Modell. Für QuestQueue müssten dabei insbesondere Bibliothekskompatibilität, Steam-Import und Hintergrundverarbeitung neu geprüft werden. [Python-Pakete in Workers](https://developers.cloudflare.com/workers/languages/python/packages/) · [Container-Bereitstellung](https://developers.cloudflare.com/containers/guides/deploy/).
 
 ## 5. Geplanter lokaler Start
 
@@ -53,6 +56,21 @@ Backend-Schlüssel stehen lokal in `.env`, nicht im Frontend oder Repository. Ba
 
 In Phase 3 entstehen die Compose-Datei und Startanleitung. Anschließend prüfen wir Start auf beiden Rechnern, Persistenz nach Neustart, Kontolöschung und Offline-Demo.
 
-## 6. Falls wir später veröffentlichen
+## 6. Cloudflare-Bereitstellungsplan
 
-Dann müssten wir Budget und Datenstandort neu festlegen und unter anderem HTTPS, sichere Cookies, Login-Rückleitung, Secrets und Backups einplanen. Erst mit einem aktuellen Gesamttarif und klaren Zuständigkeiten wäre die Wahl zwischen VPS und PaaS sinnvoll.
+| Baustein | Geplante Bereitstellung |
+| --- | --- |
+| Vue + TypeScript | Das Frontend aus dem Repository bauen und `dist/` über Cloudflare Pages auf einer eigenen HTTPS-Domain ausliefern. Das Frontend verwendet relative `/api/`-URLs. |
+| Routing und FastAPI | Auf der von Cloudflare verwalteten Proxied-Domain das Muster `/api/*` einem Worker zuordnen. Er leitet den Pfad an FastAPI in Cloudflare Containers weiter. Das Docker-Image startet Uvicorn. |
+| PostgreSQL | Neon in einer EU-Region, geplant in Frankfurt. Das Backend verbindet sich über TLS. Anwendung, Sitzungen, Importstatus und Metadaten-Cache verwenden die Datenbank. Die Migrationen laufen vor der Freigabe. |
+| Konfiguration | Steam-API-Key, Twitch-/IGDB-Zugangsdaten und DB-Zugangsdaten serverseitig als Cloudflare-Secrets hinterlegen und gezielt an den Container weitergeben. Öffentliche Basis-URL, Steam-OpenID-Realm und Callback auf die HTTPS-Domain konfigurieren. |
+
+[Vue auf Pages](https://developers.cloudflare.com/pages/framework-guides/deploy-a-vue-site/) · [Worker-Routen](https://developers.cloudflare.com/workers/configuration/routing/routes/) · [Container-Secrets](https://developers.cloudflare.com/containers/examples/env-vars-and-secrets/) · [Neon-Regionen](https://neon.com/docs/introduction/regions).
+
+**Vor einer Veröffentlichung**
+
+1. Datenhinweis und Löschkonzept für gehostete Daten, Speicherregion und Backups freigeben. Für eine kommerzielle Veröffentlichung den IGDB-Zugang vorab klären. [IGDB-Zugangsbedingungen](https://api-docs.igdb.com/#account-creation).
+2. Steam-Login, CSRF-Schutz und Cookies mit `Secure`, `HttpOnly` und `SameSite=Lax` auf der öffentlichen Domain prüfen. Persönliche API-Antworten mit `Cache-Control: no-store` ausliefern und vom Cloudflare-Cache ausnehmen. Nur die statischen Frontenddateien werden über Pages gecacht.
+3. Leerlauf-Timeout und Instanzgröße mit einem größeren Steam-Import testen. Bei Neustart muss der gespeicherte Importstatus einen abgebrochenen Lauf erkennbar machen und den letzten gültigen Bibliotheksstand erhalten. Für Backups einen Wiederherstellungstest vorsehen.
+
+Der Plan beschreibt eine mögliche spätere Bereitstellung. Die Semesterabgabe und ihre Abnahme erfolgen lokal.

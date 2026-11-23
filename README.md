@@ -62,7 +62,7 @@ Dashboard, externe Empfehlungen, Feedback, eigener Spielzeitverlauf, Wiederentde
 
 | Bereich | Festlegung |
 | --- | --- |
-| Plattform und Betrieb | Webanwendung; Frontend, Backend und Datenbank laufen lokal |
+| Plattform und Betrieb | Lokaler Hochschul-MVP mit Docker Compose. Für einen späteren öffentlichen Betrieb sind Cloudflare Pages, Cloudflare Containers und Neon PostgreSQL vorgesehen. |
 | Anmeldung | Steam Sign-In über Steam OpenID |
 | Backend | Python + FastAPI |
 | Frontend | Vue + TypeScript |
@@ -88,7 +88,7 @@ QuestQueue verbindet die nächste spielerische „Quest“ mit einer geordneten 
 | [docs/mvp.md](docs/mvp.md) | MVP-Abgrenzung, Erweiterungen, Demonstrationsfall, Projektplan und Abnahmekriterien |
 | [docs/ai-usage.md](docs/ai-usage.md) | AI-Anwendungen mit ausgewählten Prompts, Ergebnissen und kritischer Reflexion |
 | [docs/architecture.md](docs/architecture.md) | Phase 2: Variantenvergleich, Technologieentscheidungen, C4-Sichten, Datenmodell, API und kritische AI-Reflexion |
-| [docs/hosting.md](docs/hosting.md) | Lokaler Betrieb, VPS und PaaS einschließlich Kosten, Grenzen und Entscheidung |
+| [docs/hosting.md](docs/hosting.md) | Lokale Hochschulumgebung, Cloudflare als Ziel für den öffentlichen Betrieb, Kostenvergleich und Bereitstellungsplan |
 | [docs/adr/](docs/adr/README.md) | Vier Architecture Decision Records mit Kontext, Alternativen und Folgen |
 | [Architekturdiagramm](docs/diagrams/c4-container.svg) | Eigenständig lesbares C4-Containerdiagramm; bearbeitbare Mermaid-Quellen im selben Ordner |
 | [docs/api/openapi.json](docs/api/openapi.json) | OpenAPI-3.1-Entwurf der MVP-Schnittstellen |

@@ -284,7 +284,7 @@ Fehlerbeispiel:
 
 `401`: ungültige Sitzung; `403`: fehlende Berechtigung/Bestätigung oder CSRF-Fehler; `404`: fehlende oder fremde Ressource; `409`: Konflikt; `422`: ungültige Eingabe; `429`: zeitliche Sperre; `503`: fehlende Bereitschaft oder volle Importkapazität. Fehler nach bestätigtem Start erscheinen im Jobstatus. Fehlendes Profil oder keine Kandidaten ergeben eine normale leere Antwort mit `200`.
 
-## 9. Sicherheit und lokaler Betrieb
+## 9. Sicherheit und Betrieb
 
 | Thema | Geplante Lösung |
 | --- | --- |
@@ -296,7 +296,9 @@ Fehlerbeispiel:
 | Lokales HTTP | `Secure=false` nur für lokalen HTTP-Modus; bei späterem HTTPS `Secure=true`. |
 | Speicherung | Lokales Volume, keine Telemetrie/externen MVP-Backups. Persönliche Antworten: `Cache-Control: no-store`; keine persönlichen API-Daten in Local Storage oder Service-Worker-Cache. |
 
-Der Datenhinweis nennt das tatsächliche Land des Rechners; dieser Wert muss vor dem Live-Test gesetzt sein. Lokale Speicherung und nötiger Internetzugriff zu den Anbietern sind getrennte Dinge.
+Der Datenhinweis nennt in der Hochschulumgebung das tatsächliche Land des Rechners. Dieser Wert muss vor dem Live-Test gesetzt sein.
+
+Die C4-Sichten beschreiben die lokale Referenzumgebung. Für einen späteren öffentlichen Betrieb liefert Cloudflare Pages die SPA. Eine Worker-Route auf derselben HTTPS-Domain leitet `/api/*` an FastAPI in Cloudflare Containers weiter. Sitzungen, Importstatus und Metadaten-Cache liegen in verwaltetem PostgreSQL bei Neon. Anforderungen an Datenstandort, Cookie- und Cache-Konfiguration sowie die Prüfschritte stehen im [Hostingplan](hosting.md#6-cloudflare-bereitstellungsplan).
 
 ## 10. Nachverfolgbarkeit und geplante Verifikation
 
@@ -338,7 +340,7 @@ Werkzeug: ChatGPT/Codex. Auftrag war, Phase 2 aus Phase 1 abzuleiten und wichtig
 | Ganzes System mit Compose starten | Im Gespräch ausgewählt | Einheitlicher Start hilft, Docker muss aber auf beiden Rechnern funktionieren. |
 | Datenmodell, abgeleitete Profile und API entwerfen | Grundlage für Phase 3 | Fertige Profile brauchen nicht automatisch eigene Tabellen. Kontotrennung muss durch Abfragen, Sitzungen und Beziehungen abgesichert werden. |
 | Steam- und Metadatenphase trennen | Im Entwurf berücksichtigt | Gesamte Genresuche kann länger als 30 Sekunden dauern. Hintergrund-Tasks sind weder Scheduler noch garantiert dauerhafte Jobs. |
-| Hosting vergleichen | Lokalen Betrieb beibehalten | Free-Tiers können schlafen oder ablaufen. Ein günstiger Tarif ist nicht automatisch gerade buchbar. |
+| Hosting vergleichen | Compose für die Hochschulabgabe und Cloudflare als Ziel für eine spätere Veröffentlichung dokumentiert | Container übernehmen den FastAPI-Entwurf. Leerlaufstarts, externe Datenhaltung und nutzungsabhängige Kosten müssen vor der Veröffentlichung geprüft werden. |
 
 **Bewusst hinterfragt haben wir den AI-Vorschlag „modularer Monolith“:** Lange Imports können interaktive Aufrufe im selben Prozess ausbremsen. Wir behalten ihn, weil getrennte Dienste für den MVP mehr Betrieb verursachen, und begrenzen dafür die Importarbeit. Ob das genügt, prüfen wir später mit N-01/N-02. Damit ist der Nachteil benannt und eine überprüfbare Maßnahme festgelegt.
 
@@ -381,7 +383,7 @@ Die schriftlichen Deliverables sind abgedeckt. Laufende Anwendung, Performance-A
 | Was unterscheidet Current und All-Time? | Dieselbe Bibliothek, aber 14-Tage- statt Gesamtminuten; kein stiller Ersatz bei Datenlücken. |
 | Warum zwei Importphasen? | Steam rechtzeitig abschließen, langsamere Genresuche getrennt anzeigen. |
 | Was passiert nach Logout während Import? | Sitzung widerrufen, Task stoppen und Berechtigung vor späterem Speichern erneut prüfen. |
-| Warum lokaler Betrieb? | 0-€-Dienstbudget und lokale persönliche Daten sind festgelegt. |
+| Wie würden wir QuestQueue betreiben? | Lokal mit Compose für die Hochschulabgabe bei 0 € Dienstbudget. Öffentlich mit Cloudflare Pages und Containers sowie Neon PostgreSQL. |
 | Welche AI-Empfehlung haben wir hinterfragt? | Monolith: passend, aber möglicher Engpass; Begrenzung und Messung statt blindem Übernehmen. |
 
 ## 14. Entscheidungs- und Quellenverzeichnis
@@ -389,7 +391,7 @@ Die schriftlichen Deliverables sind abgedeckt. Laufende Anwendung, Performance-A
 - [ADR-001 – Modularer Monolith](adr/0001-modular-monolith.md)
 - [ADR-002 – PostgreSQL und abgeleitete Profile](adr/0002-postgresql-and-derived-profiles.md)
 - [ADR-003 – Zweistufiger Import](adr/0003-import-orchestration.md)
-- [ADR-004 – Lokaler Compose-Betrieb](adr/0004-local-compose-hosting.md)
+- [ADR-004 – Betrieb für Hochschulabgabe und Veröffentlichung](adr/0004-local-compose-hosting.md)
 - [Hostingvergleich mit Preisstand und Quellen](hosting.md)
 - [Integrationsprüfung](integration-spike.md)
 
