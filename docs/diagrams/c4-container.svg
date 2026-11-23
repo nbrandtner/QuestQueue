@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1060" viewBox="0 0 1440 1060" role="img" aria-labelledby="title desc">
+  <title id="title">QuestQueue – C4 Level 2: Container</title>
+  <desc id="desc">Eine Vue-Anwendung im lokalen Browser verwendet einen Nginx-Webserver. Dieser leitet API-Aufrufe an einen modularen FastAPI-Monolithen mit internem Import-Task weiter. PostgreSQL und sein Volume speichern persönliche Daten und allgemeine Metadaten getrennt. Steam OpenID, Steam Web API, IGDB und Twitch sind externe HTTPS-Abhängigkeiten.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#475569"/></marker>
+    <style>
+      text{font-family:Segoe UI,Arial,sans-serif;fill:#172033}
+      .title{font-size:31px;font-weight:700}.sub{font-size:17px;fill:#475569}
+      .boundary{fill:#f8fafc;stroke:#94a3b8;stroke-width:2;stroke-dasharray:9 7}
+      .compose{fill:#eff6ff;stroke:#60a5fa;stroke-width:2;stroke-dasharray:6 5}
+      .app{fill:#dbeafe;stroke:#2563eb;stroke-width:2}.store{fill:#d1fae5;stroke:#047857;stroke-width:2}
+      .external{fill:#f1f5f9;stroke:#64748b;stroke-width:2}.person{fill:#ede9fe;stroke:#7c3aed;stroke-width:2}
+      .head{font-size:21px;font-weight:700}.label{font-size:16px}.small{font-size:15px;fill:#475569}
+      .edge{fill:none;stroke:#475569;stroke-width:2;marker-end:url(#arrow)}
+      .edge-label{font-size:15px;paint-order:stroke;stroke:#fff;stroke-width:5px;stroke-linejoin:round;fill:#334155}
+    </style>
+  </defs>
+  <rect width="1440" height="1060" fill="#fff"/>
+  <text class="title" x="48" y="52">QuestQueue</text>
+  <text class="sub" x="48" y="82">C4 Level 2 · Container · Architekturentwurf · 22.11.2026</text>
+  <rect class="boundary" x="38" y="116" width="955" height="825" rx="15"/>
+  <text class="head" x="60" y="150">Vorhandener Entwicklungsrechner</text>
+  <text class="small" x="60" y="177">Persönliche Daten lokal · keine Telemetrie · ein Browser-Origin</text>
+
+  <rect class="person" x="72" y="212" width="195" height="100" rx="12"/>
+  <text class="head" text-anchor="middle" x="169" y="251">Spieler:in</text>
+  <text class="label" text-anchor="middle" x="169" y="279">[Person]</text>
+  <rect class="app" x="360" y="205" width="395" height="125" rx="12"/>
+  <text class="head" text-anchor="middle" x="557" y="239">Vue SPA</text>
+  <text class="label" text-anchor="middle" x="557" y="265">[Browser-Anwendung · TypeScript]</text>
+  <text class="label" text-anchor="middle" x="557" y="295">Bibliothek · Profilwahl · begründete Auswahl</text>
+  <path class="edge" d="M267 262 H358"/>
+
+  <rect class="compose" x="72" y="393" width="862" height="505" rx="13"/>
+  <text class="head" x="94" y="426">Docker Compose</text>
+  <text class="small" x="94" y="451">Ein Backend-Deployment · API und DB nur im internen Netz</text>
+  <rect class="app" x="360" y="477" width="395" height="95" rx="10"/>
+  <text class="head" text-anchor="middle" x="557" y="509">web · Nginx</text>
+  <text class="label" text-anchor="middle" x="557" y="537">SPA-Dateien + /api-Proxy · localhost:8080</text>
+  <path class="edge" d="M557 330 V475"/>
+  <text class="edge-label" x="574" y="368">HTTP · /api/v1 · Session-Cookie</text>
+  <text class="edge-label" x="574" y="389">Nur dieser Port auf Loopback</text>
+
+  <rect class="app" x="280" y="624" width="555" height="116" rx="10"/>
+  <text class="head" text-anchor="middle" x="557" y="656">api · FastAPI / Python</text>
+  <text class="label" text-anchor="middle" x="557" y="683">Modularer Monolith · ein Uvicorn-Worker</text>
+  <text class="label" text-anchor="middle" x="557" y="710">Auth · Bibliothek · Import-Tasks · Metadaten · Empfehlung</text>
+  <path class="edge" d="M557 572 V622"/>
+  <text class="edge-label" x="574" y="604">HTTP/JSON · api:8000</text>
+
+  <rect class="store" x="280" y="797" width="375" height="76" rx="12"/>
+  <text class="head" text-anchor="middle" x="467" y="826">db · PostgreSQL 17</text>
+  <text class="label" text-anchor="middle" x="467" y="852">Kontodaten + allgemeiner Cache</text>
+  <rect class="store" x="714" y="797" width="182" height="76" rx="12"/>
+  <text class="label" text-anchor="middle" x="805" y="827">Persistentes</text>
+  <text class="label" text-anchor="middle" x="805" y="853">lokales Volume</text>
+  <path class="edge" d="M467 740 V795"/>
+  <text class="edge-label" x="481" y="775">SQL · db:5432</text>
+  <path class="edge" d="M655 835 H712"/>
+
+  <text class="head" x="1060" y="150">Externe Systeme</text>
+  <text class="small" x="1060" y="177">HTTPS · Live-Modus benötigt Internet</text>
+  <rect class="external" x="1070" y="235" width="322" height="100" rx="12"/>
+  <text class="head" text-anchor="middle" x="1231" y="273">Steam OpenID</text>
+  <text class="label" text-anchor="middle" x="1231" y="304">Identität, kein Zugriff auf private Spiele</text>
+  <rect class="external" x="1070" y="440" width="322" height="100" rx="12"/>
+  <text class="head" text-anchor="middle" x="1231" y="478">Steam Web API</text>
+  <text class="label" text-anchor="middle" x="1231" y="509">Bibliothek und verfügbare Aktivität</text>
+  <rect class="external" x="1070" y="630" width="322" height="100" rx="12"/>
+  <text class="head" text-anchor="middle" x="1231" y="668">IGDB API</text>
+  <text class="label" text-anchor="middle" x="1231" y="699">Exakte AppID-Zuordnung und Genres</text>
+  <rect class="external" x="1070" y="810" width="322" height="100" rx="12"/>
+  <text class="head" text-anchor="middle" x="1231" y="848">Twitch OAuth</text>
+  <text class="label" text-anchor="middle" x="1231" y="879">Backend-Anwendungstoken für IGDB</text>
+
+  <path class="edge" d="M755 261 H1068"/>
+  <text class="edge-label" x="800" y="249">Login / Rückleitung</text>
+  <path class="edge" d="M835 647 H1016 V315 H1068"/>
+  <text class="edge-label" x="855" y="464" transform="rotate(-90 855 464)">Identitätsantwort prüfen</text>
+  <path class="edge" d="M835 664 H1036 V490 H1068"/>
+  <text class="edge-label" x="850" y="584">Bibliothek / Aktivität</text>
+  <path class="edge" d="M835 688 H1068"/>
+  <text class="edge-label" x="859" y="676">Mapping / Genres</text>
+  <path class="edge" d="M835 713 H1016 V860 H1068"/>
+  <text class="edge-label" x="1029" y="781">Token</text>
+
+  <text class="sub" x="48" y="983">C4-Container sind Anwendungen oder Datenspeicher. Die SPA läuft im Browser; Nginx liefert ihre Dateien aus.</text>
+  <text class="sub" x="48" y="1013">Demo-Modus: feste, getrennte Daten ohne Live-Aufrufe. Zugangsdaten bleiben im Backend.</text>
+</svg>

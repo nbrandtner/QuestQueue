@@ -1,0 +1,75 @@
+erDiagram
+  ACCOUNT o|--o{ SESSION : besitzt
+  ACCOUNT ||--o{ IMPORT_RUN : startet
+  SESSION o|--o{ IMPORT_RUN : autorisiert
+  ACCOUNT ||--o{ LIBRARY_ENTRY : besitzt
+  IMPORT_RUN ||--o{ LIBRARY_ENTRY : liefert
+  CATALOG_GAME ||--o{ LIBRARY_ENTRY : bezeichnet
+  CATALOG_GAME ||--o{ GAME_GENRE : hat
+  GENRE ||--o{ GAME_GENRE : klassifiziert
+  ACCOUNT {
+    uuid id PK
+    string steam_id UK
+    string notice_version
+    timestamptz notice_accepted_at
+    timestamptz last_import_started_at
+    timestamptz steam_retry_after
+  }
+  SESSION {
+    uuid id PK
+    string token_hash UK
+    string mode
+    uuid account_id FK "NULL bei anonymous und demo"
+    timestamptz expires_at
+    timestamptz revoked_at
+  }
+  IMPORT_RUN {
+    uuid id PK
+    uuid account_id FK
+    uuid authorizing_session_id FK "nach Loeschung ggf. NULL"
+    string kind
+    string status
+    string library_status
+    string current_status
+    string metadata_status
+    string rules_version
+  }
+  LIBRARY_ENTRY {
+    uuid account_id PK,FK
+    bigint app_id PK,FK
+    uuid source_import_id FK
+    string title
+    bigint total_minutes "nullable"
+    bigint recent_minutes "nullable"
+    timestamptz last_played_at "nullable"
+    boolean recent_evidence
+  }
+  CATALOG_GAME {
+    bigint app_id PK
+    bigint igdb_id "nullable; nicht unique"
+    string public_title "nur allgemeine Metadaten"
+    string mapping_status
+    string normalization_version
+    timestamptz fetched_at "letzter Erfolg"
+    timestamptz attempted_at "letzter Versuch"
+  }
+  GAME_GENRE {
+    bigint app_id PK,FK
+    bigint genre_id PK,FK
+  }
+  GENRE {
+    bigint id PK
+    string name
+    string provider
+    string normalization_version
+  }
+  CATALOG_STATE {
+    int id PK "genau eine Zeile"
+    bigint revision
+  }
+  PROVIDER_STATE {
+    string provider PK
+    timestamptz retry_after
+    timestamptz last_request_at
+    bigint steam_external_source_id
+  }

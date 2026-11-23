@@ -1,0 +1,7 @@
+flowchart LR
+  person["Steam-Spieler:in"] -->|"Bibliothek, Profil, Auswahl"| qq["QuestQueue · lokale Webanwendung"]
+  person -->|"Steam-Login im Browser"| steamid["Steam OpenID · extern"]
+  qq -->|"Identität verifizieren · HTTPS"| steamid
+  qq -->|"Bibliothek und Aktivität · HTTPS"| steamapi["Steam Web API · extern"]
+  qq -->|"AppID-Zuordnung und Genres · HTTPS"| igdb["IGDB API · extern"]
+  qq -->|"Anwendungstoken · HTTPS"| twitch["Twitch OAuth · extern"]

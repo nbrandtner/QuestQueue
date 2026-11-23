@@ -1,0 +1,2171 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "QuestQueue MVP API – Architekturentwurf",
+    "version": "0.1.1-design",
+    "description": "Phase 2, Stand 23.11.2026. Geplanter API-Vertrag fuer die Umsetzung. Gemeinsame Browser-Adresse ueber lokalen Proxy; serverseitige Sitzungen. Schreibende Aufrufe brauchen X-CSRF-Token und den erwarteten Origin. Das Konto kommt aus der verifizierten Sitzung, nicht aus frei waehlbaren Kontoparametern. Details: docs/architecture.md."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api/v1",
+      "description": "Geplante lokale Compose-Referenz; nur Loopback."
+    }
+  ],
+  "paths": {
+    "/session": {
+      "get": {
+        "operationId": "getSession",
+        "summary": "Sitzungsmodus und CSRF-Token lesen; bei Bedarf anonyme Sitzung anlegen.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Sitzungsmodus und CSRF-Token lesen; bei Bedarf anonyme Sitzung anlegen.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Der Token wird beim Login rotiert. Cookie: HttpOnly; SameSite=Lax; Path=/; kein Domain-Attribut. Secure=false nur fuer Loopback-HTTP, sonst true. Maximale Laufzeit 24 Stunden ohne stille Verlaengerung."
+      }
+    },
+    "/auth/steam/start": {
+      "get": {
+        "operationId": "startSteamLogin",
+        "summary": "Einmaligen browsergebundenen OpenID-Vorgang starten.",
+        "security": [],
+        "responses": {
+          "302": {
+            "description": "Einmaligen browsergebundenen OpenID-Vorgang starten.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Keine frei waehlbare Return-URL. Konfigurierter fester Steam-Provider. Bei Bedarf zuerst anonyme Browsersitzung erstellen."
+      }
+    },
+    "/auth/steam/callback": {
+      "get": {
+        "operationId": "finishSteamLogin",
+        "summary": "OpenID verifizieren, Sitzung rotieren und zur UI weiterleiten.",
+        "security": [],
+        "responses": {
+          "303": {
+            "description": "OpenID verifizieren, Sitzung rotieren und zur UI weiterleiten.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ungueltige OpenID-Antwort.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Parameter sind nur am Callback erlaubt. Provider, Signatur/Serverbestaetigung, Identitaet, return_to und einmalige Nonce werden geprueft; fehlende oder manipulierte Felder erzeugen 400 und keine Live-Sitzung. Erfolgreiche Identitaet beweist keinen Bibliothekszugriff. Nur spaetere bestaetigte Anmeldungen duerfen nach 24-Stunden-Regel einen Import anfordern.",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.ns",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.op_endpoint",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.claimed_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.identity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.return_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.response_nonce",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.assoc_handle",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.signed",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "openid.sig",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "summary": "Browsersitzung widerrufen und aktive Kontojobs stoppen.",
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Browsersitzung widerrufen und aktive Kontojobs stoppen.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/data-notice": {
+      "get": {
+        "operationId": "getDataNotice",
+        "summary": "Aktuellen Datenhinweis mit tatsaechlichem Speicherland lesen.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Aktuellen Datenhinweis mit tatsaechlichem Speicherland lesen.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DataNotice"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/data-notice/accept": {
+      "post": {
+        "operationId": "acceptDataNotice",
+        "summary": "Aktuelle Datenhinweisversion fuer Live-Konto bestaetigen.",
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Aktuelle Datenhinweisversion fuer Live-Konto bestaetigen.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Laufender Import, veralteter Datenhinweis oder aktive Live-Sitzung.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ungueltige Eingabe; unbekannte persoenliche Kontoparameter werden abgewiesen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Diese Bestaetigung startet keinen Erstimport. Der Erstimport wird anschliessend bewusst ueber POST /imports angefordert.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptNotice"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports": {
+      "post": {
+        "operationId": "startImport",
+        "summary": "Bibliotheksimport oder ausschliessliche Metadatenanreicherung starten.",
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Bibliotheksimport oder ausschliessliche Metadatenanreicherung starten.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportAccepted"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Laufender Import, veralteter Datenhinweis oder aktive Live-Sitzung.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ungueltige Eingabe; unbekannte persoenliche Kontoparameter werden abgewiesen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Cooldown oder Anbietersperre; spaeterer bewusster Start erforderlich.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Sekunden bis zum fruehestmoeglichen erneuten Versuch.",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank/Schema nicht bereit oder Importkapazitaet belegt (IMPORT_CAPACITY).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Live-Sitzung und bestaetigter Datenhinweis erforderlich. Konto wird aus Sitzung bestimmt. Mindestens 60 Sekunden zwischen Starts; hoechstens ein aktiver Job pro Konto. metadata_only benoetigt vorhandenen gueltigen Bibliotheksstand (sonst 409 NO_LIBRARY). Keine automatische Wiederholung. Steam-Gesamtdeadline 30 Sekunden ab Admission; Metadatenphase separat. Insgesamt hoechstens zwei aktive Import-Tasks; volle Kapazitaet: 503 IMPORT_CAPACITY vor Jobanlage.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportStart"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/imports/{import_id}": {
+      "get": {
+        "operationId": "getImport",
+        "summary": "Nur eigenen Importstatus mit getrennten Teilergebnissen lesen.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Nur eigenen Importstatus mit getrennten Teilergebnissen lesen.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJob"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Nicht vorhanden oder nicht dem angemeldeten Konto zugeordnet.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ungueltige Eingabe; unbekannte persoenliche Kontoparameter werden abgewiesen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "import_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/library": {
+      "get": {
+        "operationId": "getLibrary",
+        "summary": "Bibliothek oder bis zu zehn meist-/zuletzt-gespielte Titel lesen.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Bibliothek oder bis zu zehn meist-/zuletzt-gespielte Titel lesen.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibraryPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ungueltige Eingabe; unbekannte persoenliche Kontoparameter werden abgewiesen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Live nutzt ausschliesslich eigenes Konto; Demo nutzt unveraenderliche Fixture ohne Live-Aufruf. All sortiert nach numerischer AppID; most_played nach bekannten positiven Gesamtminuten absteigend, dann AppID. last_played nutzt nur gueltige Zeitpunkte; fehlen alle, recent_unordered mit nachgewiesenen kuerzlichen Spielen in AppID-Reihenfolge; andernfalls unavailable. Bei Top-Ansichten hoechstens zehn Ergebnisse und Pagination innerhalb dieser Top-10-Liste.",
+        "parameters": [
+          {
+            "name": "view",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all",
+                "most_played",
+                "last_played"
+              ],
+              "default": "all"
+            }
+          },
+          {
+            "name": "unplayed",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": "Nur explizit 0 Gesamtminuten; unbekannte Minuten werden ausgeschlossen."
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ]
+      }
+    },
+    "/recommendations": {
+      "get": {
+        "operationId": "getRecommendations",
+        "summary": "Profil, Rangliste und Button-Auswahl aus demselben Datenstand liefern.",
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Profil, Rangliste und Button-Auswahl aus demselben Datenstand liefern.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationResult"
+                },
+                "examples": {
+                  "allTimeFixture": {
+                    "summary": "Synthetisches Phase-1-Akzeptanzbeispiel; kein Live-Ergebnis.",
+                    "value": {
+                      "data_version": {
+                        "import_id": "00000000-0000-4000-8000-000000000001",
+                        "catalog_revision": 1,
+                        "rules_version": "baseline-v1"
+                      },
+                      "imported_at": "2026-11-22T10:00:00Z",
+                      "state": "ready",
+                      "profile": {
+                        "type": "all_time",
+                        "state": "available",
+                        "current_data_state": "available",
+                        "reference_games": 3,
+                        "weights": [
+                          {
+                            "genre_id": 1,
+                            "genre_name": "RPG",
+                            "weight": 0.8333333333333334
+                          },
+                          {
+                            "genre_id": 2,
+                            "genre_name": "Strategie",
+                            "weight": 0.08333333333333333
+                          },
+                          {
+                            "genre_id": 3,
+                            "genre_name": "Action",
+                            "weight": 0.08333333333333333
+                          }
+                        ]
+                      },
+                      "coverage": {
+                        "imported_games": 10,
+                        "with_genres": 9,
+                        "using_stale_metadata": 0
+                      },
+                      "items": [
+                        {
+                          "app_id": 201,
+                          "title": "RPG-Kandidat",
+                          "score": 0.8333333333333334,
+                          "explanation": {
+                            "genre_id": 1,
+                            "genre_name": "RPG",
+                            "reference_app_id": 101,
+                            "reference_title": "RPG-Referenz"
+                          },
+                          "uses_stale_metadata": false
+                        },
+                        {
+                          "app_id": 204,
+                          "title": "Gemischter Kandidat",
+                          "score": 0.4583333333333333,
+                          "explanation": {
+                            "genre_id": 1,
+                            "genre_name": "RPG",
+                            "reference_app_id": 101,
+                            "reference_title": "RPG-Referenz"
+                          },
+                          "uses_stale_metadata": false
+                        },
+                        {
+                          "app_id": 202,
+                          "title": "Strategie-Kandidat",
+                          "score": 0.08333333333333333,
+                          "explanation": {
+                            "genre_id": 2,
+                            "genre_name": "Strategie",
+                            "reference_app_id": 102,
+                            "reference_title": "Strategie-Referenz"
+                          },
+                          "uses_stale_metadata": false
+                        },
+                        {
+                          "app_id": 203,
+                          "title": "Action-Kandidat",
+                          "score": 0.08333333333333333,
+                          "explanation": {
+                            "genre_id": 3,
+                            "genre_name": "Action",
+                            "reference_app_id": 103,
+                            "reference_title": "Action-Referenz"
+                          },
+                          "uses_stale_metadata": false
+                        }
+                      ],
+                      "suggestion_app_id": 201,
+                      "warnings": []
+                    }
+                  },
+                  "currentFixture": {
+                    "summary": "Dasselbe Fixture, Current Taste.",
+                    "value": {
+                      "data_version": {
+                        "import_id": "00000000-0000-4000-8000-000000000001",
+                        "catalog_revision": 1,
+                        "rules_version": "baseline-v1"
+                      },
+                      "imported_at": "2026-11-22T10:00:00Z",
+                      "state": "ready",
+                      "profile": {
+                        "type": "current",
+                        "state": "available",
+                        "current_data_state": "available",
+                        "reference_games": 1,
+                        "weights": [
+                          {
+                            "genre_id": 2,
+                            "genre_name": "Strategie",
+                            "weight": 1.0
+                          }
+                        ]
+                      },
+                      "coverage": {
+                        "imported_games": 10,
+                        "with_genres": 9,
+                        "using_stale_metadata": 0
+                      },
+                      "items": [
+                        {
+                          "app_id": 202,
+                          "title": "Strategie-Kandidat",
+                          "score": 1,
+                          "explanation": {
+                            "genre_id": 2,
+                            "genre_name": "Strategie",
+                            "reference_app_id": 102,
+                            "reference_title": "Strategie-Referenz"
+                          },
+                          "uses_stale_metadata": false
+                        },
+                        {
+                          "app_id": 204,
+                          "title": "Gemischter Kandidat",
+                          "score": 0.5,
+                          "explanation": {
+                            "genre_id": 2,
+                            "genre_name": "Strategie",
+                            "reference_app_id": 102,
+                            "reference_title": "Strategie-Referenz"
+                          },
+                          "uses_stale_metadata": false
+                        }
+                      ],
+                      "suggestion_app_id": 202,
+                      "warnings": []
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ungueltige Eingabe; unbekannte persoenliche Kontoparameter werden abgewiesen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Kein Import oder Anbieteraufruf. Nur explizit ungespielte eigene Kandidaten mit Genres und positivem Score. Hoechstens fuenf Titel; Score ungerundet absteigend, dann numerische AppID. suggestion_app_id ist items[0].app_id oder null. state=no_import/profile_unavailable/no_candidates sind erfolgreiche leere Fachantworten, keine 500-Fehler. current verwendet ausschliesslich nachgewiesene 14-Tage-Minuten dieses Imports.",
+        "parameters": [
+          {
+            "name": "profile",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "all_time",
+                "current"
+              ],
+              "default": "all_time"
+            }
+          }
+        ]
+      }
+    },
+    "/me": {
+      "delete": {
+        "operationId": "deleteOwnData",
+        "summary": "Bestaetigte Loeschung aller eigenen aktiven Daten und Sitzungen.",
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Bestaetigte Loeschung aller eigenen aktiven Daten und Sitzungen.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Ungueltige Eingabe; unbekannte persoenliche Kontoparameter werden abgewiesen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Keine frei waehlbare SteamID. Keine externe Netzwerkverbindung erforderlich. Konto und persoenliche Kinddaten atomar loeschen, alle Kontositzungen widerrufen, Tasks stoppen. Spaete Tasks duerfen kein Konto anlegen. Allgemeiner Metadatenkatalog bleibt erhalten.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteConfirmation"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/demo/session": {
+      "post": {
+        "operationId": "startDemo",
+        "summary": "Isolierte Demo-Sitzung ohne SteamID starten.",
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Isolierte Demo-Sitzung ohne SteamID starten.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Sitzung fehlt, ist abgelaufen oder widerrufen.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Falscher Sitzungsmodus, CSRF/Origin ungueltig oder Datenhinweis fehlt.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Laufender Import, veralteter Datenhinweis oder aktive Live-Sitzung.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Erfordert anonyme oder Demo-Sitzung mit CSRF aus GET /session. Aktive Live-Sitzung: 409 LIVE_SESSION_ACTIVE; zuerst regulaer abmelden. Kein Live-Import, keine persoenliche DB und keine Live-Metadaten im Demo-Lesepfad."
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "getLiveness",
+        "summary": "API-Prozess antwortet.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "API-Prozess antwortet.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "getReadiness",
+        "summary": "Lokale DB und Migrationen sind bereit.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Lokale DB und Migrationen sind bereit.",
+            "headers": {
+              "Cache-Control": {
+                "description": "Persoenliche Antworten: no-store.",
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Neue isolierte Demo-Sitzung.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "Location": {
+                "description": "Eigene Jobstatus-URL, z. B. /api/v1/imports/{UUID}.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Datenbank oder erforderliches Schema nicht bereit.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "description": "Keine persoenlichen Daten und keine externen API-Aufrufe."
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "qq_session",
+        "description": "Zufaelliger Token; nur Hash in PostgreSQL. Sitzungsmodus und Widerruf werden serverseitig geprueft."
+      },
+      "csrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token",
+        "description": "Sitzungsgebundener Token aus GET /session; zusaetzlich Origin-Pruefung."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "retry_after_seconds": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "Warning": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "additionalProperties": false
+      },
+      "DataVersion": {
+        "type": "object",
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "catalog_revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rules_version": {
+            "type": "string",
+            "examples": [
+              "baseline-v1"
+            ]
+          }
+        },
+        "required": [
+          "import_id",
+          "catalog_revision",
+          "rules_version"
+        ],
+        "additionalProperties": false
+      },
+      "Session": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "anonymous",
+              "live",
+              "demo"
+            ]
+          },
+          "csrf_token": {
+            "type": "string",
+            "minLength": 32
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "notice_accepted": {
+            "type": "boolean"
+          },
+          "import_required": {
+            "type": "boolean"
+          },
+          "active_import_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_successful_import_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "mode",
+          "csrf_token",
+          "expires_at",
+          "notice_accepted",
+          "import_required",
+          "active_import_id",
+          "last_successful_import_at"
+        ],
+        "additionalProperties": false
+      },
+      "DataNotice": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "storage_country": {
+            "type": "string",
+            "minLength": 2
+          },
+          "text": {
+            "type": "string"
+          },
+          "accepted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "version",
+          "storage_country",
+          "text",
+          "accepted"
+        ],
+        "additionalProperties": false
+      },
+      "AcceptNotice": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "version"
+        ],
+        "additionalProperties": false
+      },
+      "ImportStart": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "library",
+              "metadata_only"
+            ]
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "additionalProperties": false
+      },
+      "ImportAccepted": {
+        "type": "object",
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued"
+            ]
+          },
+          "status_url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "import_id",
+          "status",
+          "status_url"
+        ],
+        "additionalProperties": false
+      },
+      "ImportCounts": {
+        "type": "object",
+        "properties": {
+          "imported_games": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "discarded_records": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "with_genres": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "metadata_processed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "metadata_pending": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "imported_games",
+          "discarded_records",
+          "with_genres",
+          "metadata_processed",
+          "metadata_pending"
+        ],
+        "additionalProperties": false
+      },
+      "ImportJob": {
+        "type": "object",
+        "properties": {
+          "import_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "library",
+              "metadata_only"
+            ]
+          },
+          "trigger": {
+            "type": "string",
+            "enum": [
+              "initial",
+              "manual",
+              "login"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "steam",
+              "metadata",
+              "completed",
+              "partial",
+              "failed",
+              "cancelled",
+              "interrupted"
+            ]
+          },
+          "library_status": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "running",
+              "available",
+              "failed",
+              "not_requested"
+            ]
+          },
+          "current_status": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "available",
+              "no_activity",
+              "unavailable"
+            ]
+          },
+          "metadata_status": {
+            "type": "string",
+            "enum": [
+              "not_started",
+              "running",
+              "available",
+              "partial",
+              "failed",
+              "not_requested"
+            ]
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "library_completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "retry_after_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "counts": {
+            "$ref": "#/components/schemas/ImportCounts"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            }
+          }
+        },
+        "required": [
+          "import_id",
+          "kind",
+          "trigger",
+          "status",
+          "library_status",
+          "current_status",
+          "metadata_status",
+          "started_at",
+          "library_completed_at",
+          "finished_at",
+          "retry_after_at",
+          "counts",
+          "error_code",
+          "warnings"
+        ],
+        "additionalProperties": false
+      },
+      "Genre": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "additionalProperties": false
+      },
+      "LibraryGame": {
+        "type": "object",
+        "properties": {
+          "app_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "title": {
+            "type": "string"
+          },
+          "total_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "last_played_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "recent_evidence": {
+            "type": "boolean"
+          },
+          "genres": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Genre"
+            }
+          },
+          "metadata_state": {
+            "type": "string",
+            "enum": [
+              "fresh",
+              "stale",
+              "missing",
+              "ambiguous",
+              "incompatible"
+            ]
+          }
+        },
+        "required": [
+          "app_id",
+          "title",
+          "total_minutes",
+          "recent_minutes",
+          "last_played_at",
+          "recent_evidence",
+          "genres",
+          "metadata_state"
+        ],
+        "additionalProperties": false
+      },
+      "LibraryPage": {
+        "type": "object",
+        "properties": {
+          "data_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imported_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "view": {
+            "type": "string",
+            "enum": [
+              "all",
+              "most_played",
+              "last_played"
+            ]
+          },
+          "activity_order": {
+            "type": "string",
+            "enum": [
+              "not_applicable",
+              "timestamp",
+              "recent_unordered",
+              "unavailable"
+            ]
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LibraryGame"
+            }
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            }
+          }
+        },
+        "required": [
+          "data_version",
+          "imported_at",
+          "view",
+          "activity_order",
+          "offset",
+          "limit",
+          "total",
+          "items",
+          "warnings"
+        ],
+        "additionalProperties": false
+      },
+      "GenreWeight": {
+        "type": "object",
+        "properties": {
+          "genre_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "genre_name": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "required": [
+          "genre_id",
+          "genre_name",
+          "weight"
+        ],
+        "additionalProperties": false
+      },
+      "PreferenceProfile": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "all_time",
+              "current"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "available",
+              "no_positive_minutes",
+              "data_unavailable",
+              "no_import"
+            ]
+          },
+          "current_data_state": {
+            "type": "string",
+            "enum": [
+              "available",
+              "no_activity",
+              "unavailable",
+              "unknown"
+            ]
+          },
+          "reference_games": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "weights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GenreWeight"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "state",
+          "current_data_state",
+          "reference_games",
+          "weights"
+        ],
+        "additionalProperties": false
+      },
+      "Coverage": {
+        "type": "object",
+        "properties": {
+          "imported_games": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "with_genres": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "using_stale_metadata": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "imported_games",
+          "with_genres",
+          "using_stale_metadata"
+        ],
+        "additionalProperties": false
+      },
+      "Explanation": {
+        "type": "object",
+        "properties": {
+          "genre_id": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "genre_name": {
+            "type": "string"
+          },
+          "reference_app_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "reference_title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "genre_id",
+          "genre_name",
+          "reference_app_id",
+          "reference_title"
+        ],
+        "additionalProperties": false
+      },
+      "Recommendation": {
+        "type": "object",
+        "properties": {
+          "app_id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "title": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number",
+            "exclusiveMinimum": 0,
+            "maximum": 1
+          },
+          "explanation": {
+            "$ref": "#/components/schemas/Explanation"
+          },
+          "uses_stale_metadata": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "app_id",
+          "title",
+          "score",
+          "explanation",
+          "uses_stale_metadata"
+        ],
+        "additionalProperties": false
+      },
+      "RecommendationResult": {
+        "type": "object",
+        "properties": {
+          "data_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DataVersion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "imported_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "profile_unavailable",
+              "no_candidates",
+              "no_import"
+            ]
+          },
+          "profile": {
+            "$ref": "#/components/schemas/PreferenceProfile"
+          },
+          "coverage": {
+            "$ref": "#/components/schemas/Coverage"
+          },
+          "items": {
+            "type": "array",
+            "maxItems": 5,
+            "items": {
+              "$ref": "#/components/schemas/Recommendation"
+            }
+          },
+          "suggestion_app_id": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Warning"
+            }
+          }
+        },
+        "required": [
+          "data_version",
+          "imported_at",
+          "state",
+          "profile",
+          "coverage",
+          "items",
+          "suggestion_app_id",
+          "warnings"
+        ],
+        "additionalProperties": false
+      },
+      "DeleteConfirmation": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "confirm"
+        ],
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "unavailable"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

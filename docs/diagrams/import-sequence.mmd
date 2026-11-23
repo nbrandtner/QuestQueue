@@ -1,0 +1,40 @@
+sequenceDiagram
+  actor U as Nutzer:in
+  participant UI as Vue SPA
+  participant API as FastAPI / Import-Task
+  participant DB as PostgreSQL
+  participant S as Steam Web API
+  participant I as IGDB / Twitch
+  U->>UI: Import nach Datenhinweis starten
+  UI->>API: POST /api/v1/imports + Cookie + CSRF
+  API->>DB: Konto sperren, Sitzung / Cooldown / aktiven Job prüfen
+  DB-->>API: Job queued, Startzeit gesetzt
+  API-->>UI: 202 Accepted + Location
+  Note over API,S: Steam-Phase: insgesamt 30 Sekunden ab Auftragsannahme
+  API->>S: Bibliothek und verfügbare aktuelle Aktivität
+  S-->>API: Antworten oder Fehler
+  alt Bibliothek gültig
+    API->>DB: Konto, Sitzung, Job erneut unter Sperre prüfen
+    alt Noch autorisiert
+      API->>DB: Bibliothek + erfolgreichen Bibliotheksstatus atomar ersetzen
+      Note over UI,DB: Profil mit vorhandenem Cache bereits lesbar
+      loop Berechtigt, keine Sperre: noch nicht versuchte AppIDs
+        API->>DB: Sitzung und Abbruch vor weiterem Abruf prüfen
+        API->>I: Exakte AppID-Zuordnung, Genres (max. 1 Start/s)
+        I-->>API: Daten oder Fehler / 429
+        alt Gültige Metadaten
+          API->>DB: Metadaten atomar speichern, Revision erhöhen
+        else 429 oder anderer Fehler
+          API->>DB: Fehlerstatus, bei 429 Sperrzeit speichern
+          Note over API,DB: Gültigen alten Cache behalten, keinen automatischen Retry starten
+        end
+      end
+      API->>DB: completed / partial, Fortschritt und Sperre speichern
+    else Abgemeldet / gelöscht / abgelaufen
+      API->>DB: Kein persönlicher Commit; Job abbrechen falls noch vorhanden
+    end
+  else Bibliothek ungültig oder Timeout
+    API->>DB: Job failed; letzter gültiger Bibliotheksstand bleibt
+  end
+  UI->>API: GET /api/v1/imports/{import_id}
+  API-->>UI: Teilstatus, Datenstand, Abdeckung, Fehlercode

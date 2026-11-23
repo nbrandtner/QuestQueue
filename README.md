@@ -2,7 +2,9 @@
 
 **Your Library, Your new Quest**
 
-Stand: 05.11.2026 · Version 1.0 · Phase 1 – Project Definition & Requirements
+Stand: 23.11.2026 · Version 2.1 · Phase 2 – Architecture & Design
+
+Phase 1 ist abgegeben. Für Phase 2 haben wir uns für ein modulares FastAPI-Backend und den lokalen Start mit Docker Compose entschieden. Variantenvergleich, Datenmodell und API stehen in [docs/architecture.md](docs/architecture.md), einschließlich Aufgabenabgleich und Fragen fürs Projektgespräch. Die Anwendung bauen wir in Phase 3. Die [API-Probe vom 23.11.2026](docs/integration-spike.md) prüft alle 195 importierten Spiele: 182 eindeutige IGDB-Zuordnungen, 180 mit Genres und fünf mit positiven aktuellen Minuten samt Genres. Die Wiederverwendung des Probe-Caches ist ebenfalls belegt. Die vollständige Anwendungsintegration bleibt offen.
 
 QuestQueue unterstützt Steam-Spieler:innen bei der Frage **„Was soll ich als Nächstes spielen?“** Die Webanwendung analysiert die eigene Bibliothek und das bisherige Spielverhalten. Sie erstellt ein nachvollziehbares Präferenzprofil und empfiehlt passende ungespielte Titel aus dem eigenen Bestand. Zwei Profile unterscheiden aktuelle Interessen (**Current Taste**) von langfristigen Schwerpunkten (**All-Time Taste**).
 
@@ -85,3 +87,11 @@ QuestQueue verbindet die nächste spielerische „Quest“ mit einer geordneten 
 | [docs/requirements.md](docs/requirements.md) | Begriffe, User Stories, funktionale und nichtfunktionale Anforderungen, Prioritäten, Akzeptanzkriterien und Datenregeln |
 | [docs/mvp.md](docs/mvp.md) | MVP-Abgrenzung, Erweiterungen, Demonstrationsfall, Projektplan und Abnahmekriterien |
 | [docs/ai-usage.md](docs/ai-usage.md) | AI-Anwendungen mit ausgewählten Prompts, Ergebnissen und kritischer Reflexion |
+| [docs/architecture.md](docs/architecture.md) | Phase 2: Variantenvergleich, Technologieentscheidungen, C4-Sichten, Datenmodell, API und kritische AI-Reflexion |
+| [docs/hosting.md](docs/hosting.md) | Lokaler Betrieb, VPS und PaaS einschließlich Kosten, Grenzen und Entscheidung |
+| [docs/adr/](docs/adr/README.md) | Vier Architecture Decision Records mit Kontext, Alternativen und Folgen |
+| [Architekturdiagramm](docs/diagrams/c4-container.svg) | Eigenständig lesbares C4-Containerdiagramm; bearbeitbare Mermaid-Quellen im selben Ordner |
+| [docs/api/openapi.json](docs/api/openapi.json) | OpenAPI-3.1-Entwurf der MVP-Schnittstellen |
+| [docs/integration-spike.md](docs/integration-spike.md) | Anleitung zur API-Stichprobe, noch offene Nachweise und Ergebnisprotokoll |
+
+Die AI-Unterstützung für Phase 2 ist in [architecture.md, Abschnitt 12](docs/architecture.md#12-ai-unterstützung-und-kritische-prüfung) dokumentiert. Die Phase-1-Anforderungen, der damalige MVP-Plan und das ursprüngliche AI-Protokoll bleiben als abgegebene Basis erhalten.

@@ -1,0 +1,72 @@
+# Local credentials; sanitized examples belong in Git.
+.env
+.env.*
+*.env
+!.env.example
+!.env.*.example
+secrets/
+.secrets/
+.aws/
+.ssh/
+*.key
+*.pem
+*.p12
+*.pfx
+
+# Local probe reports, metadata, previews and other runtime state.
+.local/
+/report*.json
+/metadata-cache.json
+/data/
+/pgdata/
+/backups/
+/logs/
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.backup
+*.sql.gz
+
+# Generated submission packages; commit their source files instead.
+/QuestQueue-Phase*.zip
+
+# Python environments, bytecode and tool caches.
+.venv/
+venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+*.egg-info/
+.eggs/
+.coverage
+.coverage.*
+htmlcov/
+
+# Frontend dependencies, builds and generated test output.
+node_modules/
+dist/
+build/
+.vite/
+.cache/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Machine-specific editor and operating-system files.
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini

@@ -1,0 +1,18 @@
+flowchart TB
+  subgraph local["Vorhandener Entwicklungsrechner · lokale Grenze"]
+    person["Spieler:in"] --> spa["Vue SPA · TypeScript · Browser"]
+    subgraph compose["Docker Compose · ein Backend-Deployment"]
+      web["web · Nginx · SPA-Dateien und /api-Proxy<br/>Loopback: localhost:8080"]
+      api["api · FastAPI · ein Uvicorn-Worker<br/>Auth, Bibliothek, Import-Tasks, Metadaten, Empfehlungen"]
+      db[("db · PostgreSQL 17<br/>Persönliche Daten und allgemeiner Cache logisch getrennt")]
+      web -->|"HTTP/JSON · api:8000"| api
+      api -->|"SQL · db:5432"| db
+      db --- volume["Persistentes lokales Volume"]
+    end
+    spa -->|"HTTP · SPA-Dateien, /api/v1, Session-Cookie"| web
+  end
+  spa -->|"HTTPS · Login / Rückleitung"| openid["Steam OpenID · extern"]
+  api -->|"HTTPS · Antwort prüfen"| openid
+  api -->|"HTTPS · Bibliothek / Aktivität"| steam["Steam Web API · extern"]
+  api -->|"HTTPS · genaue AppIDs / Genres"| igdb["IGDB API · extern"]
+  api -->|"HTTPS · Client-Credentials-Token"| twitch["Twitch OAuth · extern"]
